@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-clap > "3.0.0"
+clap = "*"
+eframe = "*"
+native-dialog = "*"

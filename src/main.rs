@@ -86,7 +86,7 @@ impl App for MyApp {
                 ui.label(format!("Selected Directory: {}", self.directory));
 
                 ui.checkbox(&mut self.yearly, "Aggregate data by year");
-                ui.checkbox(&mut self.battery_test, "Process JSON files with new structure");
+                ui.checkbox(&mut self.battery_test, "Process JSON files for battery test");
 
                 if ui.button("Run Script").clicked() {
                     self.run_script();

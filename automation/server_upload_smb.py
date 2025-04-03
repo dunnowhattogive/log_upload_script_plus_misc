@@ -139,7 +139,7 @@ def parse_new_json_structure(test_data):
     
     return parsed_data
 
-def upload_file_smb(file_path, server_name, share_name, destination_path, username, password, port=445):
+def upload_file_smb(file_path, server_name, share_name, destination_path, username, password, port=445, allow_all_days=False):
     """
     Uploads a file to an SMB share using smbprotocol.
 
@@ -151,9 +151,10 @@ def upload_file_smb(file_path, server_name, share_name, destination_path, userna
     - username: Username for authentication.
     - password: Password for authentication.
     - port: Port for SMB (default is 445).
+    - allow_all_days: Boolean flag to allow uploads on all days of the week.
     """
-    # Check if today is Friday
-    if datetime.today().weekday() != 6:  # 6 corresponds to Sunday
+    # Restrict uploads to Sundays unless explicitly allowed
+    if not allow_all_days and datetime.today().weekday() != 6:  # 6 corresponds to Sunday
         message = "File upload is only allowed on Sundays."
         log_message("info", message)
         return
@@ -504,7 +505,22 @@ def main():
     parser.add_argument("directory", nargs="?", default=BASE_DIR, help="Directory containing JSON files")
     parser.add_argument("--yearly", action="store_true", help="Aggregate data by year")
     parser.add_argument("--battery-test", action="store_true", help="Process JSON files with new structure")
+    parser.add_argument("--upload-file", help="Path to a specific file to upload")
     args = parser.parse_args()
+
+    if args.upload_file:
+        log_message("info", f"Uploading file: {args.upload_file}")
+        upload_file_smb(
+            args.upload_file,
+            SERVER_NAME,
+            SHARE_NAME,
+            DESTINATION_PATH,
+            USERNAME,
+            PASSWORD,
+            allow_all_days=True  # Allow uploads on all days for button press
+        )
+        log_message("info", "File upload completed.")
+        return
 
     directory = args.directory
     yearly = args.yearly

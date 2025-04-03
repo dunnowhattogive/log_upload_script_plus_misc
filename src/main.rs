@@ -9,7 +9,7 @@ fn main() {
     let _ = eframe::run_native(
         "Rust Frontend GUI",
         options,
-        Box::new(|_cc| Ok(Box::new(MyApp::default()))),
+        Box::new(|_cc| Box::new(MyApp::default())), // Removed `Ok` wrapper
     );
 }
 
@@ -85,11 +85,23 @@ impl App for MyApp {
 
                 ui.label(format!("Selected Directory: {}", self.directory));
 
+                if ui.button("Select File to Upload").clicked() {
+                    if let Some(path) = FileDialog::new().show_open_single_file().ok().flatten() {
+                        self.directory = path.to_string_lossy().to_string();
+                    }
+                }
+
+                ui.label(format!("Selected File: {}", self.directory));
+
                 ui.checkbox(&mut self.yearly, "Aggregate data by year");
                 ui.checkbox(&mut self.battery_test, "Process JSON files for battery test");
 
                 if ui.button("Run Script").clicked() {
                     self.run_script();
+                }
+
+                if ui.button("Upload Selected File").clicked() {
+                    self.upload_file();
                 }
             });
         });
@@ -125,6 +137,42 @@ impl MyApp {
         args.push(&self.username);
         args.push("--password");
         args.push(&self.password);
+
+        let output = ProcessCommand::new("python3")
+            .args(&args)
+            .output()
+            .expect("Failed to execute Python script");
+
+        if !output.stdout.is_empty() {
+            println!("{}", String::from_utf8_lossy(&output.stdout));
+        }
+
+        if !output.stderr.is_empty() {
+            eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+        }
+    }
+
+    fn upload_file(&self) {
+        if self.directory.is_empty() {
+            eprintln!("No file selected for upload.");
+            return;
+        }
+
+        let args = vec![
+            "d:\\vicky software\\bkp\\bkp\\automation\\server_upload_smb.py",
+            "--upload-file",
+            &self.directory,
+            "--server-ip",
+            &self.server_ip,
+            "--share-name",
+            &self.share_name,
+            "--destination-path",
+            &self.destination_path,
+            "--username",
+            &self.username,
+            "--password",
+            &self.password,
+        ];
 
         let output = ProcessCommand::new("python3")
             .args(&args)
